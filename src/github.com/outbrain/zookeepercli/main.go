@@ -111,13 +111,28 @@ func main() {
 		}
 	case "create":
 		{
-			if len(flag.Args()) < 2 {
-				log.Fatal("Expected data argument")
-			}
-			if result, err := zk.Create(path, []byte(flag.Arg(1)), *force); err == nil {
-				log.Infof("Created %+v", result)
+			if len(*input_file) != 0 {
+				log.Info("Reading input file: ", *input_file)
+				bytes, err := ioutil.ReadFile(*input_file)
+				if err != nil {
+					log.Fatale(err)
+				}
+
+				if result, err := zk.Create(path, bytes, *force); err == nil {
+					log.Infof("Created %+v", result)
+				} else {
+					log.Fatale(err)
+				}
 			} else {
-				log.Fatale(err)
+				if len(flag.Args()) < 2 {
+					log.Fatal("Expected data argument")
+				}
+
+				if result, err := zk.Create(path, []byte(flag.Arg(1)), *force); err == nil {
+					log.Infof("Created %+v", result)
+				} else {
+					log.Fatale(err)
+				}	
 			}
 		}
 	case "set":
