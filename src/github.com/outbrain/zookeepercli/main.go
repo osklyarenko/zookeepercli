@@ -22,12 +22,14 @@ import (
 	"github.com/outbrain/zookeepercli/output"
 	"github.com/outbrain/zookeepercli/zk"
 	"strings"
+	"io/ioutil"
 )
 
 // main is the application's entry point.
 func main() {
 	servers := flag.String("servers", "", "srv1[:port1][,srv2[:port2]...]")
 	command := flag.String("c", "", "command, required (exists|get|ls|lsr|create|creater|set|delete)")
+	input_file := flag.String("f", "", "input file, optional")
 	force := flag.Bool("force", false, "force operation")
 	format := flag.String("format", "txt", "output format (txt|json)")
 	verbose := flag.Bool("verbose", false, "verbose")
@@ -119,15 +121,30 @@ func main() {
 			}
 		}
 	case "set":
-		{
-			if len(flag.Args()) < 2 {
-				log.Fatal("Expected data argument")
-			}
-			if result, err := zk.Set(path, []byte(flag.Arg(1))); err == nil {
-				log.Infof("Set %+v", result)
+		{		
+			if len(*input_file) != 0 {
+				log.Info("Reading input file: ", *input_file)
+				bytes, err := ioutil.ReadFile(*input_file)
+				if err != nil {
+					log.Fatale(err)
+				}
+
+				if result, err := zk.SetWithVersionUpgrade(path, bytes); err == nil {
+					log.Infof("Set %+v", result)
+				} else {
+					log.Fatale(err)
+				}
 			} else {
-				log.Fatale(err)
+				if len(flag.Args()) < 2 {
+					log.Fatal("Expected data argument")
+				}
+				if result, err := zk.Set(path, []byte(flag.Arg(1))); err == nil {
+					log.Infof("Set %+v", result)
+				} else {
+					log.Fatale(err)
+				}
 			}
+
 		}
 	case "delete":
 		{

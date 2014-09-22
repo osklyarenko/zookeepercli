@@ -161,6 +161,22 @@ func Set(path string, data []byte) (*zk.Stat, error) {
 	return connection.Set(path, data, 0)
 }
 
+func SetWithVersionUpgrade(path string, data []byte) (*zk.Stat, error) {
+	connection, err := connect()
+	if err != nil {
+		return nil, err
+	}
+
+	defer connection.Close()
+
+	_, stat, err := connection.Get(path)
+	if err != nil {
+		return nil, err		
+	}
+
+	return connection.Set(path, data, stat.Version)
+}
+
 // Delete removes a path entry. It exits with error if the path does not exist, or has subdirectories.
 func Delete(path string) error {
 	connection, err := connect()
